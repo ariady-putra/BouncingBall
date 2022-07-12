@@ -1,0 +1,1 @@
+This application needs GLUT installed on your system to run.
