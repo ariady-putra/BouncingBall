@@ -17,7 +17,6 @@ import qualified Data.Text as Dtxt
 import Data.Time
 
 import Graphics.Gloss
-import Graphics.Gloss.Data.ViewPort
 
 import Text.Printf
 
