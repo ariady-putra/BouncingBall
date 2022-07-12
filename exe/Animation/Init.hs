@@ -107,7 +107,7 @@ processCliArgs [f, w, h, r, v, m, c, l, b] = do
 -- private func
 showHelp :: String -> IO x
 showHelp x = do
-    putStrLn "Unable to progress arguments!"
+    putStrLn "Unable to process arguments!"
     putStrLn ""
     putStrLn "Valid arguments are:"
     putStrLn "f - frame per second"

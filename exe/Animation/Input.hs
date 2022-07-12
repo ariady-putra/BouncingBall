@@ -86,9 +86,9 @@ getWH label defaultValue = do
         Right i -> if i < 250
             then putStr "Min.250, " >> getWH label defaultValue
             else return i
-
-
+        
     
+
 -- private func
 getSpeed :: String -> Float -> IO Float
 getSpeed label defaultValue = do
