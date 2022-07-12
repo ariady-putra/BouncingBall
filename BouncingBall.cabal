@@ -1,0 +1,48 @@
+cabal-version:      2.4
+name:               BouncingBall
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+
+-- The package author(s).
+author:             Kiki Ariady Putra
+
+-- An email address to which users can send suggestions, bug reports, and patches.
+maintainer:         aurodeus@gmail.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files: CHANGELOG.md
+
+executable BouncingBall
+    main-is:          Animation.hs
+
+    -- Modules included in this executable, other than Main.
+    other-modules:    Animation.Draw,
+                      Animation.Init,
+                      Animation.Input,
+                      Animation.State,
+                      Animation.Environment
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:    base     ,
+                      text     ,
+                      time     ,
+                      gloss    ,
+                      random   ,
+                      directory,
+                      transformers
+    hs-source-dirs:   exe
+    default-language: Haskell2010
