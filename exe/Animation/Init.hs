@@ -44,7 +44,7 @@ initBalls = do -- need IO due to randomRIO
     
     let color = map Ball.intToColor balls -- rotate colors
     
-    let z = zipWith7 (,,,,,,) balls pos vel dir vInc maxV color
+    let z = zip7 balls pos vel dir vInc maxV color
     return [Ball.initState b | b <- z]
 
 initEnv :: [String] -> IO Environment
