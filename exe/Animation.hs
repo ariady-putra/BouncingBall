@@ -15,9 +15,9 @@ main :: IO ()
 main = do
     hSetBuffering stdout NoBuffering -- auto-flush all putStr
     
-    env <- getArgs >>= initEnv
+    env <- initEnv =<< getArgs
     let fps = framePerSecond env
-
+    
     initialState <- runReaderT initBalls env
     let wndw = runReader window env
         draw = flip runReaderT env . drawBalls

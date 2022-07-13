@@ -1,3 +1,5 @@
+{-# LANGUAGE BlockArguments #-}
+
 module Animation.Input
 ( getFrameW
 , getFrameH
@@ -11,6 +13,7 @@ module Animation.Input
 where
 
 import Control.Concurrent
+import Control.Monad
 
 import Data.Char
 
@@ -57,14 +60,11 @@ getBallCount maxCount firstRun = do
     let defC = min maxCount 500 -- default value cannot be greater than max value
     let maxC = show maxCount
     
-    if firstRun
-    then do
+    when firstRun do
         putStr "Surprise! "
         threadDelay 1000000
         putStr "One last thing... "
         threadDelay 1000000
-    else return () -- does nothing and just continue to the next line
-    
     putStr $ "How many balls [max." ++ maxC ++ ", default " ++ show defC ++ "]: "
     input <- getLine
     if null input -- if null then print and return default value

@@ -1,3 +1,5 @@
+{-# LANGUAGE BlockArguments #-}
+
 module Animation.Draw
 ( window
 , drawBalls
@@ -8,6 +10,7 @@ where
 import Animation.Environment
 import qualified Animation.State as Ball
 
+import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
@@ -106,24 +109,19 @@ stepPVD (pos, vel, dir) (vInc, maxV) bound sec = do
 
 -- private func
 logDbgMsg :: Dtxt.Text -> StateRIO ()
-logDbgMsg dbgTxt = do
-    if not . Dtxt.null $ dbgTxt
-    then do
-        b <- get
-        let ball = Ball.ballID b
-        let pvdX = (Ball.posX b, Ball.velX b, Ball.dirX b)
-            pvdY = (Ball.posY b, Ball.velY b, Ball.dirY b)
-        let dbgStr = printf (Dtxt.unpack dbgTxt) ball
-                ++ " X:" ++ show pvdX
-                ++ " Y:" ++ show pvdY
-                ++ "\n"
-        liftIO . putStr $ dbgStr
-        
-        env <- lift ask
-        if saveLogTxt env
-        then liftIO . appendFile (logTxtPath env) $ dbgStr
-        else return ()
-    else return ()
+logDbgMsg dbgTxt = unless (Dtxt.null dbgTxt) do
+    b <- get
+    let ball = Ball.ballID b
+    let pvdX = (Ball.posX b, Ball.velX b, Ball.dirX b)
+        pvdY = (Ball.posY b, Ball.velY b, Ball.dirY b)
+    let dbgStr = printf (Dtxt.unpack dbgTxt) ball
+            ++ " X:" ++ show pvdX
+            ++ " Y:" ++ show pvdY
+            ++ "\n"
+    liftIO . putStr $ dbgStr
+    
+    env <- lift ask
+    when (saveLogTxt env) . liftIO . appendFile (logTxtPath env) $ dbgStr
 
 -- private func
 draw :: Ball.State -> Reader Environment Picture

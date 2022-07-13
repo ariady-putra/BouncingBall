@@ -9,6 +9,7 @@ import Animation.Input
 import qualified Animation.State as Ball
 
 import Control.Exception
+import Control.Monad
 import Control.Monad.Trans.Reader
 
 import Data.List
@@ -48,7 +49,7 @@ initBalls = do -- need IO due to randomRIO
 
 initEnv :: [String] -> IO Environment
 initEnv cliArgs@[_, _, _, _, _, _, _, _, _] =
-    processCliArgs cliArgs
+    tryProcessArgs cliArgs
     `catch`
     showException
 initEnv [] = do
@@ -66,7 +67,7 @@ initEnv [] = do
     let wndwSize = w * h
     let ballSize = ceiling $ 4 * r * r
     logFileExist <- doesFileExist $ filePath
-    writeFile filePath "" -- to mark that this app has been run
+    unless logFileExist . writeFile filePath $ "" -- mark app run
     b <- getBallCount (wndwSize `div` ballSize) (not logFileExist)
     
     return env
@@ -81,8 +82,8 @@ initEnv [] = do
 initEnv _ = showHelp "user error (Invalid number of arguments)"
 
 -- private func
-processCliArgs :: [String] -> IO Environment
-processCliArgs [f, w, h, r, v, m, c, l, b] = do
+tryProcessArgs :: [String] -> IO Environment
+tryProcessArgs [f, w, h, r, v, m, c, l, b] = do
     fps         <- readIO f
     frameW      <- readIO w
     frameH      <- readIO h
