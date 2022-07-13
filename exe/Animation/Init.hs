@@ -37,10 +37,10 @@ initBalls = do -- need IO due to randomRIO
     let dir = zip dX dY
     
     let charge = ballCharge env -- flexibility to have individual
-    let vInc = repeat (charge,charge) -- charge in the future
+    let vInc = repeat (charge, charge) -- charge in the future
     
     let maxVel = maxBallVel env -- flexibility to have individual
-    let maxV = repeat (maxVel,maxVel) -- max.vel in the future
+    let maxV = repeat (maxVel, maxVel) -- max.vel in the future
     
     let color = map Ball.intToColor balls -- rotate colors
     
