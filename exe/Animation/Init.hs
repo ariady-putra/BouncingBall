@@ -27,14 +27,14 @@ initBalls = do -- need IO due to randomRIO
     let yRange = (ballR - hBound env, hBound env - ballR)
     pX <- mapM (\ _ -> randomRIO xRange) balls
     pY <- mapM (\ _ -> randomRIO yRange) balls
-    let pos = zipWith (,) pX pY
+    let pos = zip pX pY
     
     let v = ballStartV env -- flexibility to have individual
     let vel = repeat (v,v) -- init.vel in the future
     
     dX <- mapM (\ _ -> signum <$> randomRIO (-1, 1)) balls
     dY <- mapM (\ _ -> signum <$> randomRIO (-1, 1)) balls
-    let dir = zipWith (,) dX dY
+    let dir = zip dX dY
     
     let charge = ballCharge env -- flexibility to have individual
     let vInc = repeat (charge,charge) -- charge in the future
