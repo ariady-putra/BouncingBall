@@ -8,6 +8,7 @@ where
 import Animation.Environment
 import qualified Animation.State as Ball
 
+import Control.Monad.IO.Class
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.State.Lazy
@@ -41,17 +42,9 @@ drawBalls balls = do                          -- must return IO Picture
     env <- ask
     let w = frameW env
         h = frameH env
-    let for p [] = (Color white $ rectangleSolid w h) : p -- anticipate window resize
-        for p (ball:next) = for (draw ball : p) next where
-            draw b = let
-                (x, y) = (Ball.posX b, Ball.posY b)
-                r = ballRadius env
-                c = Ball.ballColor b
-                in pictures
-                [ translate x y . Color c $ circleSolid r
-                , translate x y $ circle r
-                ]
-    return . pictures . for [] $ balls -- it feels weird to read this line
+    let bg = Color white $ rectangleSolid w h -- anticipate window resize
+        bs = map (flip runReader env . draw) balls
+    return . pictures $ bg : bs
 
 stepBalls :: Float -> [Ball.State] -> ReaderIO [Ball.State]
 stepBalls _   []          = return []
@@ -80,7 +73,7 @@ step sec = do
     
     -- update state
     let (pX, vX, dX) = nextX
-    let (pY, vY, dY) = nextY
+        (pY, vY, dY) = nextY
     let nextState = currState
             { Ball.pos = (pX, pY)
             , Ball.vel = (vX, vY)
@@ -104,7 +97,7 @@ stepPVD (pos, vel, dir) (vInc, maxV) bound sec = do
             v = min (vel + vInc) maxV
             p = pos + v * d * sec
         ball <- lift . lift $ length <$> show <$> ballCounts <$> ask
-        time <- lift . lift . lift $ show <$> getCurrentTime
+        time <- liftIO $ show <$> getCurrentTime
         tell . Dtxt.pack $ printf "[Ball#%%0%dd] %s" ball time
         return (p, v, d)
     else
@@ -124,10 +117,24 @@ logDbgMsg dbgTxt = do
                 ++ " X:" ++ show pvdX
                 ++ " Y:" ++ show pvdY
                 ++ "\n"
-        lift . lift . putStr $ dbgStr
+        liftIO . putStr $ dbgStr
         
         env <- lift ask
         if saveLogTxt env
-        then lift . lift . appendFile (logTxtPath env) $ dbgStr
+        then liftIO . appendFile (logTxtPath env) $ dbgStr
         else return ()
     else return ()
+
+-- private func
+draw :: Ball.State -> Reader Environment Picture
+draw ball = do
+    let (x, y) = (Ball.posX ball, Ball.posY ball)
+
+    env <- ask
+    let r = ballRadius env
+        c = Ball.ballColor ball
+    return . pictures $
+        [ translate x y . Color c $ circleSolid r
+        , translate x y $ circle r
+        ]
+    
