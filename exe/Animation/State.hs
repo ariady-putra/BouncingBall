@@ -10,7 +10,6 @@ module Animation.State
 , velIncY
 , maxVelX
 , maxVelY
-, intToColor
 , initState
 )
 where
@@ -58,15 +57,6 @@ maxVelX = fst . maxVel
 
 maxVelY :: State -> Float
 maxVelY = snd . maxVel
-
-intToColor :: Int -> Color
-intToColor i = case abs i `mod` 6 of
-    1 -> red
-    2 -> green
-    3 -> blue
-    4 -> cyan
-    5 -> magenta
-    0 -> yellow
 
 type Pos = XY
 type Vel = XY

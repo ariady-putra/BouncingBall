@@ -34,7 +34,7 @@ window :: Reader Environment Display
 window = do
     env <- ask
     let d = frameDimension env
-        c = ballCounts $ env
+        c = ballCounts env
         b = case c of
             1 -> "BouncingBall"
             _ -> printf "Bouncing %d Balls" c
@@ -46,15 +46,11 @@ drawBalls balls = do                          -- must return IO Picture
     let w = frameW env
         h = frameH env
     let bg = Color white $ rectangleSolid w h -- anticipate window resize
-        bs = map (flip runReader env . draw) balls
+        bs = map toPicture balls where toPicture = flip runReader env . draw
     return . pictures $ bg : bs
 
 stepBalls :: Float -> [Ball.State] -> ReaderIO [Ball.State]
-stepBalls _   []          = return []
-stepBalls sec (curr:next) = do
-    a <- execStateT (step sec) curr
-    z <- stepBalls sec next
-    return $ a:z
+stepBalls = mapM . execStateT . step
 
 -- private func
 step :: Float -> StateRIO Ball.State
@@ -69,7 +65,7 @@ step sec = do
     env <- lift ask
     let maxX = xBound env
         maxY = yBound env
-
+    
     -- step pos, vel, dir
     (nextX, xLog) <- runWriterT $ stepPVD pvdX velX maxX sec
     (nextY, yLog) <- runWriterT $ stepPVD pvdY velY maxY sec
@@ -87,7 +83,7 @@ step sec = do
     -- log debug messages
     logDbgMsg xLog
     logDbgMsg yLog
-
+    
     return nextState
 
 -- private func
@@ -97,9 +93,9 @@ stepPVD (pos, vel, dir) (vInc, maxV) bound sec = do
     if pos' < -bound || pos' > bound -- if it's going to be out of bound
     then do                          -- then recalculate pos:
         let d = -dir -- change direction
-            v = min (vel + vInc) maxV
+            v = min maxV $ vInc + vel
             p = pos + v * d * sec
-        ball <- lift . lift $ length <$> show <$> ballCounts <$> ask
+        ball <- lift . lift $ length . show . ballCounts <$> ask
         time <- liftIO $ show <$> getCurrentTime
         tell . Dtxt.pack $ printf "[Ball#%%0%dd] %s" ball time
         return (p, v, d)

@@ -14,6 +14,8 @@ import Control.Monad.Trans.Reader
 
 import Data.List
 
+import Graphics.Gloss
+
 import System.Directory
 import System.Exit
 import System.Random
@@ -21,31 +23,29 @@ import System.Random
 initBalls :: ReaderT Environment IO [Ball.State]
 initBalls = do -- need IO due to randomRIO
     env <- ask
-    let balls = [1 .. ballCounts env]
-    let ballR = ballRadius env
-    
-    let xRange = (ballR - wBound env, wBound env - ballR)
-    let yRange = (ballR - hBound env, hBound env - ballR)
-    pX <- mapM (\ _ -> randomRIO xRange) balls
-    pY <- mapM (\ _ -> randomRIO yRange) balls
+    let c = ballCounts env
+        x = xBound env
+        y = yBound env
+    pX <- replicateM c . randomRIO $ (-x, x)
+    pY <- replicateM c . randomRIO $ (-y, y)
     let pos = zip pX pY
     
-    let v = ballStartV env -- flexibility to have individual
-    let vel = repeat (v,v) -- init.vel in the future
+    let v   = ballStartV env -- flexibility to have individual
+        vel = repeat (v, v)  -- init.vel in the future
     
-    dX <- mapM (\ _ -> signum <$> randomRIO (-1, 1)) balls
-    dY <- mapM (\ _ -> signum <$> randomRIO (-1, 1)) balls
+    dX <- replicateM c $ signum <$> randomRIO (-1, 1)
+    dY <- replicateM c $ signum <$> randomRIO (-1, 1)
     let dir = zip dX dY
     
     let charge = ballCharge env -- flexibility to have individual
-    let vInc = repeat (charge, charge) -- charge in the future
+        vInc   = repeat (charge, charge) -- charges in the future
     
     let maxVel = maxBallVel env -- flexibility to have individual
-    let maxV = repeat (maxVel, maxVel) -- max.vel in the future
+        maxV   = repeat (maxVel, maxVel) -- max.vel in the future
     
-    let color = map Ball.intToColor balls -- rotate colors
+    let colors = cycle [red, green, blue, cyan, magenta, yellow]
     
-    return [Ball.initState b | b <- zip7 balls pos vel dir vInc maxV color]
+    return . map Ball.initState $ zip7 [1..c] pos vel dir vInc maxV colors
 
 initEnv :: [String] -> IO Environment
 initEnv cliArgs@[_, _, _, _, _, _, _, _, _] =

@@ -1,8 +1,8 @@
 module Main where
 
 import Animation.Draw
-import Animation.Init
 import Animation.Environment
+import Animation.Init
 
 import Control.Monad.Trans.Reader
 
@@ -18,8 +18,10 @@ main = do
     env <- initEnv =<< getArgs
     let fps = framePerSecond env
     
-    initialState <- runReaderT initBalls env
-    let wndw = runReader window env
-        draw = flip runReaderT env . drawBalls
-        step = (\ _ sec balls -> runReaderT (stepBalls sec balls) env)
+    let fRunReader  = flip runReader  env
+        fRunReaderT = flip runReaderT env
+    initialState <- fRunReaderT initBalls
+    let wndw = fRunReader window
+        draw = fRunReaderT . drawBalls
+        step _ sec = fRunReaderT . stepBalls sec
     simulateIO wndw black fps initialState draw step
