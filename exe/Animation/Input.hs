@@ -14,34 +14,28 @@ where
 
 import Control.Concurrent
 import Control.Monad
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Reader
 
 import Data.Char
 
 getFrameW :: IO Int -- initial window width
-getFrameW = getWH "Width [min.250, default 1500]: " 1500
+getFrameW = runReaderT getWH ("Width [min.250, default 1500]: ", 1500)
 
 getFrameH :: IO Int -- initial window height
-getFrameH = getWH "Height [min.250, default 750]: " 750
+getFrameH = runReaderT getWH ("Height [min.250, default 750]: ", 750)
 
 getBallSize :: Int -> IO Float -- ball radius
-getBallSize maxRadius = do
-    putStr $ "Ball radius [between 1.." ++ show maxRadius ++ ", default 5]: "
-    input <- getLine
-    if null input -- if null then print and return default value
-    then print 5 >> return 5
-    else case isInputAllDigit input >>= isInputBetween (1, maxRadius) of
-        Left error -> putStr error >> getBallSize maxRadius
-        Right size -> return size
-    
+getBallSize = runReaderT getSize
 
 getBallInitVel :: IO Float -- initial velocity
-getBallInitVel = getSpeed "Initial speed [default 5]: " 5
+getBallInitVel = runReaderT getSpeed ("Initial speed [default 5]: ", 5)
 
 getMaxVelocity :: IO Float -- maximum velocity
-getMaxVelocity = getSpeed "Max. speed [default 500]: " 500
+getMaxVelocity = runReaderT getSpeed ("Max. speed [default 500]: ", 500)
 
 getWallCharges :: IO Float -- velocity increment
-getWallCharges = getSpeed "Wall charge [default 50]: " 50
+getWallCharges = runReaderT getSpeed ("Wall charge [default 50]: ", 50)
 
 getFileLogging :: IO Bool -- enable file logging
 getFileLogging = do
@@ -56,49 +50,71 @@ getFileLogging = do
     else putStr "Only Y or N. " >> getFileLogging
 
 getBallCount :: Int -> Bool -> IO Int
-getBallCount maxCount firstRun = do
-    let defC = min maxCount 500 -- default value cannot be greater than max value
-    let maxC = show maxCount
-    
-    when firstRun do
-        putStr "Surprise! "
-        threadDelay 1000000
-        putStr "One last thing... "
-        threadDelay 1000000
-    putStr $ "How many balls [max." ++ maxC ++ ", default " ++ show defC ++ "]: "
-    input <- getLine
-    if null input -- if null then print and return default value
-    then print defC >> return defC
-    else case isInputAllDigit input >>= isInputBetween (1, maxCount) of
-        Left reject -> putStr reject >> getBallCount maxCount False
-        Right count -> return count
-    
+getBallCount = curry $ runReaderT getCount
 
 -- private func
-getWH :: String -> Int -> IO Int
-getWH label defaultValue = do
-    putStr label
-    input <- getLine
+getWH :: ReaderT (String, Int) IO Int
+getWH = do
+    (label, defaultValue) <- ask
+    liftIO . putStr $ label
+    input <- liftIO getLine
     if null input -- if null then print and return default value
-    then print defaultValue >> return defaultValue
+    then (liftIO . print $ defaultValue) >> return defaultValue
     else case isInputAllDigit input of
-        Left no -> putStr no >> getWH label defaultValue
+        Left no -> (liftIO . putStr $ no) >> getWH
         Right i -> if i < 250
-            then putStr "Min.250, " >> getWH label defaultValue
+            then (liftIO . putStr $ "Min.250, ") >> getWH
             else return i
         
     
 
 -- private func
-getSpeed :: String -> Float -> IO Float
-getSpeed label defaultValue = do
-    putStr label
-    input <- getLine
+getSize :: ReaderT Int IO Float -- ball radius
+getSize = do
+    maxRadius <- ask
+    liftIO . putStr $
+        "Ball radius [between 1.." ++ show maxRadius ++ ", default 5]: "
+    input <- liftIO getLine
     if null input -- if null then print and return default value
-    then print (truncate defaultValue) >> return defaultValue
+    then (liftIO . print $ 5) >> return 5
+    else case isInputAllDigit input >>= isInputBetween (1, maxRadius) of
+        Left error -> (liftIO . putStr $ error) >> getSize
+        Right size -> return size
+    
+
+-- private func
+getSpeed :: ReaderT (String, Float) IO Float
+getSpeed = do 
+    (label, defaultValue) <- ask
+    liftIO . putStr $ label
+    input <- liftIO getLine
+    if null input -- if null then print and return default value
+    then (liftIO . print . truncate $ defaultValue) >> return defaultValue
     else case isInputAllDigit input of
-        Left reject -> putStr reject >> getSpeed label defaultValue
+        Left reject -> (liftIO . putStr $ reject) >> getSpeed
         Right speed -> return . fromIntegral $ speed
+    
+
+-- private func
+getCount :: ReaderT (Int, Bool) IO Int
+getCount = do
+    (maxCount, firstRun) <- ask
+    let defC = min maxCount 500 -- default value cannot be greater than max value
+    let maxC = show maxCount
+    
+    when firstRun do
+        liftIO . putStr $ "Surprise! "
+        liftIO . threadDelay $ 1000000
+        liftIO . putStr $ "One last thing... "
+        liftIO . threadDelay $ 1000000
+    liftIO . putStr $
+        "How many balls [max." ++ maxC ++ ", default " ++ show defC ++ "]: "
+    input <- liftIO getLine
+    if null input -- if null then print and return default value
+    then (liftIO . print $ defC) >> return defC
+    else case isInputAllDigit input >>= isInputBetween (1, maxCount) of
+        Left reject -> (liftIO . putStr $ reject) >> getCount
+        Right count -> return count
     
 
 -- private func
