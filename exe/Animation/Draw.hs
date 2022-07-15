@@ -122,8 +122,8 @@ logDbgMsg dbgTxt = unless (Dtxt.null dbgTxt) do
 -- private func
 draw :: Ball.State -> Reader Environment Picture
 draw ball = do
-    let (x, y) = (Ball.posX ball, Ball.posY ball)
-
+    let (x, y) = Ball.pos ball
+    
     env <- ask
     let r = ballRadius env
         c = Ball.ballColor ball
